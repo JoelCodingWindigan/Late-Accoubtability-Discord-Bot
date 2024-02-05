@@ -1,9 +1,13 @@
 import discord
 from discord.ext import commands
-from matcher import *
+import openai
+import asyncio
 
 intents = discord.Intents.all()
 client = commands.Bot(command_prefix="!", intents=intents)
+
+# OpenAI GPT-3 API key
+openai.api_key = 'token'
 
 # hashmap used to keep track of how often a user says they are late or something similar 
 my_hashmap = {}
@@ -12,33 +16,56 @@ my_hashmap = {}
 @client.event
 async def on_ready():
     print("The Bot is now ready for use! Booyah")
-    
 
 
 @client.event
 async def on_message(message):
-    #print(f"Message receoved: {message.content}")
     await count_message(message)
     await client.process_commands(message)
 
 
 async def count_message(message):
-    target_phrase = "I'll be late"
     user_input = message.content.lower()
 
-    # Check similarity using Levenshtein distance
-    similarity = default_similarity(user_input, target_phrase)
+    # Check if the word "late" is present in the message
+    if "late" in user_input:
+        # Use GPT-3 to determine if the message indicates the user will be late
+        is_late = await gpt3_check_late(user_input)
 
-    # Define a threshold for considering a match
-    similarity_threshold = 0.8
+        if is_late:
+            user_id = str(message.author.id)
+            my_hashmap[user_id] = my_hashmap.get(user_id, 0) + 1
+            await message.channel.send(f"Bro fr?? You gonna be late again?! You've been late {my_hashmap[user_id]} times.")
 
-    if similarity >= similarity_threshold:
-        user_id = str(message.author.id)
 
-        # Increment the count for the user or set it to 1 if it doesn't exist
-        my_hashmap[user_id] = my_hashmap.get(user_id, 0) + 1
-        #print("Bro fr you gonna be late again!? You've been late " + str(my_hashmap[user_id]) + "times. ")
-        await message.channel.send("bro fr?? you gonna be late again?! You've been late " + str(my_hashmap[user_id]) + " times.")
+async def gpt3_check_late(user_input):
+    # Define the prompt for GPT-3
+    prompt = f"The user said: {user_input}. Is the user indicating that they will be late?"
+
+    try:
+        # Introduce a delay to avoid rate limits
+        await asyncio.sleep(2)  # 2 seconds delay
+
+        # Request completion from GPT-3 using the chat endpoint
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # Use the appropriate model
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": prompt},
+            ],
+        )
+
+        # Extract the generated text from GPT-3's response
+        generated_text = response['choices'][0]['message']['content'].strip()
+
+        # Determine if the generated text indicates the user will be late
+        is_late = "yes" in generated_text.lower()  # Adjust as needed
+
+        return is_late
+
+    except openai.error.OpenAIError as e:
+        print(f"Error from OpenAI: {e}")
+        return False
 
 @client.command()
 async def print_count(ctx):
@@ -47,7 +74,9 @@ async def print_count(ctx):
     await ctx.send(f'This user {ctx.author.name} has been late {count} times')
 
 
-client.run('MTIwMzA5NDQ0OTYxMDI5MzM1MA.Grgane.jEi-h9LUT838kSBOZEO8ip2Kj7owXQTLzS7eXI')
+
+
+client.run('token ')
 
 
 
