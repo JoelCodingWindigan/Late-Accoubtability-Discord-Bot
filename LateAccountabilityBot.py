@@ -28,14 +28,14 @@ async def count_message(message):
     user_input = message.content.lower()
 
     # Check if the word "late" is present in the message
-    if "late" in user_input:
-        # Use GPT-3 to determine if the message indicates the user will be late
-        is_late = await gpt3_check_late(user_input)
-
+    
+    is_late = await gpt3_check_late(user_input)
+    
+    if not message.author.bot:
         if is_late:
             user_id = str(message.author.id)
             my_hashmap[user_id] = my_hashmap.get(user_id, 0) + 1
-            await message.channel.send(f"Bro fr?? You gonna be late again?! You've been late {my_hashmap[user_id]} times.")
+            await message.channel.send(f" You've been late {my_hashmap[user_id]} time(s).")
 
 
 async def gpt3_check_late(user_input):
@@ -76,7 +76,7 @@ async def print_count(ctx):
 
 
 
-client.run('token ')
+client.run('token')
 
 
 
