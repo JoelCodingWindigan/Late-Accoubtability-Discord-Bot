@@ -5,7 +5,7 @@ import asyncio
 
 intents = discord.Intents.all()
 client = commands.Bot(command_prefix="!", intents=intents)
-openai.api_key = 'API token'
+openai.api_key = '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'
 
 openai.base_url = "https://api.openai.com/v1/"
 openai.default_headers = {"x-foo": "true"}
@@ -38,12 +38,12 @@ async def count_message(message):
         if is_late:
             user_id = str(message.author.id)
             my_hashmap[user_id] = my_hashmap.get(user_id, 0) + 1
-            await message.channel.send(f" You've been late {my_hashmap[user_id]} time(s).")
+            await message.channel.send(f"You've been late {my_hashmap[user_id]} time(s).")
 
 
 async def gpt3_check_late(user_input):
     # Define the prompt for GPT-3
-    prompt = f"The user said: {user_input}. Is the user indicating that they will be late?"
+    prompt = f"The user said: {user_input}. Is the user indicating that they will be late? Please respond in yes or nos. Pay attention to double negatives. For instance saying I'll not not be late should return yes"
 
     
     # Introduce a delay to avoid rate limits
@@ -69,13 +69,17 @@ async def gpt3_check_late(user_input):
 
     
 
+
 @client.command()
-async def print_count(ctx):
-    user_id = str(ctx.author.id)
+async def print_count(ctx, user: discord.User = None):
+    if user is None:
+        # If no user is mentioned, use the author of the command
+        user = ctx.author
+
+    user_id = str(user.id)
     count = my_hashmap.get(user_id, 0)
-    await ctx.send(f'This user {ctx.author.name} has been late {count} times')
+    await ctx.send(f'{user.name} has been late {count} times')
 
 
 
-
-client.run('bot token')
+client.run('MTIwMzA5NDQ0OTYxMDI5MzM1MA.GI8iDR.4pj2qxGLudxZ1aF88Mdm9vDztxUqGvwUFY58Yo')
