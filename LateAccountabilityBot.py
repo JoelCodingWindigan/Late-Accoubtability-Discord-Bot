@@ -5,9 +5,12 @@ import asyncio
 
 intents = discord.Intents.all()
 client = commands.Bot(command_prefix="!", intents=intents)
+openai.api_key = 'API token'
 
-# OpenAI GPT-3 API key
-openai.api_key = 'token'
+openai.base_url = "https://api.openai.com/v1/"
+openai.default_headers = {"x-foo": "true"}
+
+
 
 # hashmap used to keep track of how often a user says they are late or something similar 
 my_hashmap = {}
@@ -42,30 +45,29 @@ async def gpt3_check_late(user_input):
     # Define the prompt for GPT-3
     prompt = f"The user said: {user_input}. Is the user indicating that they will be late?"
 
-    try:
-        # Introduce a delay to avoid rate limits
-        await asyncio.sleep(2)  # 2 seconds delay
+    
+    # Introduce a delay to avoid rate limits
+    await asyncio.sleep(2)  # 2 seconds delay
 
         # Request completion from GPT-3 using the chat endpoint
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # Use the appropriate model
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt},
-            ],
-        )
-
-        # Extract the generated text from GPT-3's response
-        generated_text = response['choices'][0]['message']['content'].strip()
+    completion = openai.chat.completions.create(
+    model="gpt-4",
+    messages=[
+        {
+            "role": "user",
+            "content": prompt,
+            
+        },
+    ],
+    )
+    generated_text = completion.choices[0].message.content
 
         # Determine if the generated text indicates the user will be late
-        is_late = "yes" in generated_text.lower()  # Adjust as needed
+    is_late = "yes" in generated_text.lower()  # Adjust as needed
 
-        return is_late
+    return is_late
 
-    except openai.error.OpenAIError as e:
-        print(f"Error from OpenAI: {e}")
-        return False
+    
 
 @client.command()
 async def print_count(ctx):
@@ -76,8 +78,4 @@ async def print_count(ctx):
 
 
 
-client.run('token')
-
-
-
-# Run the bot
+client.run('bot token')
